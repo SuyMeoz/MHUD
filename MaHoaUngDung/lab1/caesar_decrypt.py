@@ -1,7 +1,6 @@
 import caesar_encrypt 
 
 def caesar_decrypt_char(ch, shift):
-
     return caesar_encrypt.caesar_encrypt_char(ch, -shift)
 
 def caesar_decrypt(ciphertext, shift):
