@@ -67,6 +67,13 @@ def caesar_encrypt(plaintext, shift):
 
 `+ shift` dịch chuyển vị trí
 
+`print("" + "".join(mapping_upper.keys()))` : in ra bảng chữ cái gốc 
+> nguồn từ câu lệnh : { `chr(ord('a') + i)`: chr( (ord('a') + i - ord('a') + shift) % 26 + ord('a')) for i in range(26) }
+
+`print("=>" + "".join(mapping_upper.values()))` : in ra bảng chữ cái đã mã hóa theo shift 
+> nguồn từ câu lệnh : { chr(ord('a') + i): `chr( (ord('a') + i - ord('a') + shift) % 26 + ord('a')) for i in range(26)` }
+
+
 `enc = caesar_encrypt_char(ch, shift)` : mã hóa từng ký tự trong chuỗi
 
 `cipher_chars.append(enc)` : thêm ký tự mã hóa vào danh sách
@@ -143,7 +150,7 @@ best = candidates_sorted[0]
 def caesar_encrypt_simple(text, shift):
     return "".join(caesar_encrypt.caesar_encrypt_char(ch, shift) for ch in text)
 ```
-: mã hóa toàn bộ chuỗi
+ hàm mã hóa toàn bộ chuỗi
 
 `hidden_shift = random.randint(1, 25)` : chọn shift ngẫu nhiên từ (1 - 25)
 
