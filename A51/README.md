@@ -150,7 +150,134 @@ Khi `i = 0` → dịch phải 7 → lấy bit cao nhất (MSB).Khi `i = 7` → d
 ket qua : [0, 1, 0, 0, 0, 0, 0, 1]
 ```
 
+### 📑 bits_to_bytes(bits)
+```python
+def bits_to_bytes(bits):
+    out = []
 
+    for i in range(0, len(bits), 8):
+        byte = 0
+
+        for j in range(8):
+            byte = (byte << 1) | bits[i +j]
+
+        out.append(byte)
+    
+    return bytes(out)
+```
+`for i in range(0, len(bits), 8)` : duyệt qua danh sách bits theo từng nhóm 8 bit
+
+`for j in range(8)` : duyệt qua từng bit trong nhóm 8 bit
+
+`byte << 1` : dịch trái byte 1 bit
+
+`| bits[i +j]` : thêm bit mới nhất vào vị trí thấp nhất
+
+### 📑 init_registers_from_key(key_bytes)
+```python
+def init_registers_from_key(key_bytes):
+    key_bits = bytes_to_bits(key_bytes)
+
+    while len(key_bits) < (19+22+23):
+        key_bits += key_bits
+
+    R1 = key_bits[0:19]
+    R2 = key_bits[19:19+22]
+    R3 = key_bits[19+22:19+22+23]
+
+    return R1[:], R2[:], R3[:]
+```
+`while len(key_bits) < (19+22+23)` : Đảm bảo rằng số lượng bit đủ để khởi tạo ba thanh ghi
+
+`R1 = key_bits[0:19]` : Lấy 19 bit đầu tiên để khởi tạo thanh ghi R1
+
+`R2 = key_bits[19:19+22]` : Lấy 22 bit tiếp theo để khởi tạo thanh ghi R2
+
+`R3 = key_bits[19+22:19+22+23]` : Lấy 23 bit tiếp theo để khởi tạo thanh ghi R3
+
+### 📑 majority(a, b, c)
+```python
+def majority(a, b, c):
+    return 1 if (a+b+c) >= 2 else 0
+```
+tính major dựa trên xác định giá trị chiếm đa số
+
+### 📑 clock_reg(reg, taps)
+```python
+def clock_reg(reg, taps):
+    feedback = 0
+
+    for t in taps:
+        feedback ^= reg[t]
+
+    out = reg.pop()
+    reg.insert(0, feedback)
+
+    return out
+```
+`for t in taps` : duyệt qua từng vị trí t trong taps
+
+`reg[t]` : lấy giá trị bit tại vị trí t
+
+`feedback ^= reg[t]` : thực hiện phép XOR giữa feedback và bit đó
+
+`out = reg.pop()` : Lấy và loại bỏ bit cuối cùng trong thanh ghi (bit bên phải)
+
+`reg.insert(0, feedback)` : Chèn feedback vào đầu thanh ghi (bên trái)
+
+### 📑 a5_1_keystream_from_key(key_bytes, n)
+```python
+def a5_1_keystream_from_key(key_bytes, n):
+    R1, R2, R3 = init_registers_from_key(key_bytes)
+
+    ks = []
+
+    for _ in range(n):
+        m = majority(R1[8], R2[10], R3[10])
+
+        if R1[8] == m:
+            clock_reg(R1, [13,16,17,18])
+
+        if R2[10] == m:
+            clock_reg(R2, [20,21])
+
+        if R3[10] == m:
+            clock_reg(R3, [7,20,21,22])
+        
+        ks_bit = R1[-1] ^ R2[-1] ^ R3[-1]
+        ks.append(ks_bit)
+    
+    return ks
+```
+`R1, R2, R3 = init_registers_from_key(key_bytes)` : khởi tạo 3 thanh ghi từ khóa đầu vào
+
+`for _ in range(n)` : Lặp n lần để sinh ra n bit trong chuỗi keystream
+
+`m = majority(R1[8], R2[10], R3[10])` : gán giá trị của major cho m
+
+`clock_reg(R1, [13,16,17,18])` : dịch thanh ghi phản nếu bằng major
+
+`ks_bit = R1[-1] ^ R2[-1] ^ R3[-1]` : Tính bit keystream bằng XOR của bit cuối cùng (bit bên phải nhất) của mỗi thanh ghi
+ 
+### 📑 stream_xor_bytes_with_bitstream(data_bytes, keystream_bits)
+```python
+def stream_xor_bytes_with_bitstream(data_bytes, keystream_bits):
+    data_bits = bytes_to_bits(data_bytes)
+    out_bits = [d ^ k for d, k in zip(data_bits, keystream_bits)]
+
+    return bits_to_bytes(out_bits)
+```
+`data_bits = bytes_to_bits(data_bytes)` : chuyển dữ liệu từ dạng byte sang bit
+
+`out_bits = [d ^ k for d, k in zip(data_bits, keystream_bits)]` : Thực hiện phép XOR từng cặp bit giữa data_bits và keystream_bits
+
+> ví dụ
+```python
+data_bytes = b'\xAA'  # 10101010
+keystream_bits = [1,0,1,0,1,0,1,0]  # 10101010
+
+10101010 XOR 10101010 = 00000000 → b'\x00'
+```
 
 ## 📄 Ví dụ sử dụng
 ```python
