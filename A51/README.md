@@ -42,7 +42,7 @@ Chỉ dịch chuyển những LFSR có clocking bit = majority.
 ### 🔄 Cơ chế dịch trái trong LFSR (Linear Feedback Shift Register)
 Mỗi lần dịch trái (shift left) trong LFSR diễn ra như sau:
 
-1. ính toán bit phản hồi (feedback bit):
+1. Tính toán bit phản hồi (feedback bit):
     - Lấy các bit ở vị trí tap (được định nghĩa trước cho từng LFSR).
     - Thực hiện phép XOR tất cả các bit này để tạo ra feedback bit.
 
@@ -225,6 +225,16 @@ def clock_reg(reg, taps):
 
 `reg.insert(0, feedback)` : Chèn feedback vào đầu thanh ghi (bên trái)
 
+> ví dụ 
+```python
+reg = [1, 0, 1, 1, 0]
+taps = [0, 2, 4]
+
+out = clock_reg(reg, taps)
+print("Output bit:", out) # 0
+print("Updated register:", reg) # [0,1,0,1,1]
+```
+
 ### 📑 a5_1_keystream_from_key(key_bytes, n)
 ```python
 def a5_1_keystream_from_key(key_bytes, n):
@@ -255,9 +265,15 @@ def a5_1_keystream_from_key(key_bytes, n):
 
 `m = majority(R1[8], R2[10], R3[10])` : gán giá trị của major cho m
 
-`clock_reg(R1, [13,16,17,18])` : dịch thanh ghi phản nếu bằng major
+`clock_reg(R1, [13,16,17,18])` : dịch thanh ghi nếu bằng major
 
 `ks_bit = R1[-1] ^ R2[-1] ^ R3[-1]` : Tính bit keystream bằng XOR của bit cuối cùng (bit bên phải nhất) của mỗi thanh ghi
+
+> ví dụ
+
+```python
+
+```
  
 ### 📑 stream_xor_bytes_with_bitstream(data_bytes, keystream_bits)
 ```python
