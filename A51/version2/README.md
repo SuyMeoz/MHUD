@@ -69,6 +69,26 @@ Dịch phải toàn bộ thanh ghi, chèn feedback vào MSB.
 
 Trả về thanh ghi mới và output bit.
 
+> ví dụ
+Giả sử bạn có:
+
+`lfsr_val = 0b1001` (giá trị ban đầu của LFSR, tức là 9 ở dạng nhị phân)
+
+`lfsr_taps = [0, 3]` (các vị trí bit dùng để tính toán phản hồi — thường là các bit quan trọng trong chu kỳ)
+
+`lfsr_bits = 4` (số bit của LFSR)
+
+1. `Output bit` là bit thấp nhất của lfsr_val: 
+    - output_bit = 0b1001 & 1 = 1
+2. Tính feedback bit bằng XOR các bit tại vị trí `0` và `3`:
+    - Bit tại vị trí 0: (0b1001 >> 0) & 1 = 1
+    - Bit tại vị trí 3: (0b1001 >> 3) & 1 = 1
+    - feedback_bit = 1 ^ 1 = 0
+3. Dịch phải `lfsr_val` 1 bit:
+    - lfsr_val >>= 1 → 0b1001 >> 1 = 0b0100
+4. Chèn feedback_bit vào bit cao nhất: 
+    - lfsr_val |= (0 << 3) → vẫn là 0b0100
+
 ## 5. Clock theo majority
 ```python
 def clock(self):

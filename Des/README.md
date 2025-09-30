@@ -62,6 +62,33 @@ def _from_binary_list(self, bit_list):
 ```
 Chuyển danh sách bit ngược lại thành bytes.
 
+`byte_data = bytearray()` : tạo một bytearray để lưu kết quả. 
+
+`range(0, len(bit_list), 8)` : đi từ 0 đến hết danh sách, nhảy 8 bước một.
+
+> ví dụ bit_list = [0,1,0,0,0,0,0,1, 0,1,0,0,0,0,1,0]
+- Lần 1: lấy [0,1,0,0,0,0,0,1]
+- Lần 2: lấy [0,1,0,0,0,0,1,0]
+
+`byte << 1`: dịch trái 1 bit (tức nhân đôi, chừa chỗ cho bit mới).
+
+`| bit_list[i + j]`: thêm bit mới vào vị trí thấp nhất
+
+> ví dụ : Quá trình ghép 8 bit `[0,1,0,0,0,0,0,1]` thành 1 byte
+
+| Bước | Bit thêm | Công thức tính        | Giá trị thập phân | Dạng nhị phân |
+|------|----------|-----------------------|-------------------|---------------|
+| B1   | 0        | (0 << 1) \| 0 = 0    | 0                 | 0             |
+| B2   | 1        | (0 << 1) \| 1 = 1    | 1                 | 1             |
+| B3   | 0        | (1 << 1) \| 0 = 2    | 2                 | 10₂           |
+| B4   | 0        | (2 << 1) \| 0 = 4    | 4                 | 100₂          |
+| B5   | 0        | (4 << 1) \| 0 = 8    | 8                 | 1000₂         |
+| B6   | 0        | (8 << 1) \| 0 = 16   | 16                | 10000₂        |
+| B7   | 0        | (16 << 1) \| 0 = 32  | 32                | 100000₂       |
+| B8   | 1        | (32 << 1) \| 1 = 65  | 65                | 1000001₂      |
+
+
+
 ## 4. Hoán vị
 ```python
 def _permute(self, data, p_table):
