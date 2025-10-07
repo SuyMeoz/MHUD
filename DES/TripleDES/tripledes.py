@@ -222,7 +222,6 @@ class TripleDES:
         plaintext = self.des1.decrypt_block(sep2)
         return plaintext
     
-
 key1 = b'12345678'
 key2 = b'abcdefgh'
 key3 = b'IJKLMNOP'
