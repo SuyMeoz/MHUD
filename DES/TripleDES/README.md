@@ -1,60 +1,104 @@
 # TripleDES
 
-### Các bảng DES: vai trò và cách sử dụng
+## Bảng cấu hình DES
 
 ```python
-IP = [58, 50, 42, 34, 26, 18, 10, 2, ...]
+IP = [58, 50, 42, 34, 26, 18, 10, 2,
+      60, 52, 44, 36, 28, 20, 12, 4,
+      62, 54, 46, 38, 30, 22, 14, 6,
+      64, 56, 48, 40, 32, 24, 16, 8,
+      57, 49, 41, 33, 25, 17, 9, 1,
+      59, 51, 43, 35, 27, 19, 11, 3,
+      61, 53, 45, 37, 29, 21, 13, 5,
+      63, 55, 47, 39, 31, 23, 15, 7]
 ```
-- **Danh sách chỉ số 1-based:** Mỗi số biểu diễn vị trí bit (1 đến 64) trong khối 64 bit đầu vào.
-- **Ý nghĩa:** Bảng hoán vị ban đầu. Sau khi đưa dữ liệu vào, DES đổi thứ tự các bit theo IP để chuẩn hóa trước vòng Feistel.
-- **Tác động:** Tạo ra phân bố bit thuận lợi cho khuếch tán trong 16 vòng tiếp theo.
+- **Bảng IP:** Hoán vị ban đầu 64 bit dữ liệu vào. Mỗi số là vị trí 1-based của bit nguồn cần đặt ở vị trí hiện tại.
+- **Công dụng từng phần tử:** Ví dụ phần tử đầu 58 nghĩa là bit thứ 58 của đầu vào sẽ trở thành bit đầu của dữ liệu sau IP.
 
 ```python
-FP = [40, 8, 48, 16, 56, 24, 64, 32, ...]
+FP = [40, 8, 48, 16, 56, 24, 64, 32,
+      39, 7, 47, 15, 55, 23, 63, 31,
+      38, 6, 46, 14, 54, 22, 62, 30,
+      37, 5, 45, 13, 53, 21, 61, 29,
+      36, 4, 44, 12, 52, 20, 60, 28,
+      35, 3, 43, 11, 51, 19, 59, 27,
+      34, 2, 42, 10, 50, 18, 58, 26,
+      33, 1, 41, 9, 49, 17, 57, 25]
 ```
-- **Danh sách chỉ số 1-based:** Hoán vị 64 bit sau 16 vòng.
-- **Ý nghĩa:** Bảng hoán vị cuối. Đưa dữ liệu sau khi hoàn tất vòng về thứ tự chuẩn để xuất ra bản mã hoặc bản rõ.
+- **Bảng FP:** Hoán vị cuối 64 bit sau 16 vòng Feistel.
+- **Công dụng:** Đưa dữ liệu R16||L16 về thứ tự chuẩn để xuất ra bản mã/bản rõ.
 
 ```python
-E = [32, 1, 2, 3, 4, 5, 4, 5, ...]
+E = [32, 1, 2, 3, 4, 5, 4, 5,
+     6, 7, 8, 9, 8, 9, 10, 11,
+     12, 13, 12, 13, 14, 15, 16, 17,
+     16, 17, 18, 19, 20, 21, 20, 21,
+     22, 23, 24, 25, 24, 25, 26, 27,
+     28, 29, 28, 29, 30, 31, 32, 1]
 ```
-- **Danh sách 48 phần tử:** Mỗi phần tử là vị trí bit (1–32) từ nửa phải.
-- **Ý nghĩa:** Mở rộng 32 → 48 bit bằng cách lặp lại một số bit rìa (vì 48 = 8×6 để vào 8 S-Box).
-- **Tác động:** Cho phép XOR với subkey 48 bit.
+- **Bảng E (Expansion):** Ánh xạ 32 bit nửa phải thành 48 bit bằng cách lặp các bit rìa.
+- **Công dụng từng phần:** Ví dụ 32 ở đầu nghĩa là bit 32 lặp lên vị trí mở rộng đầu tiên; 1,2,3,4,5 tiếp theo lấy bit liên tiếp; các cặp lặp như 4,5 xuất hiện để tạo 48 bit.
 
 ```python
-S_BOXES = [ ... 8 bảng ... ]
+S_BOXES = [
+    # S1
+    [
+        [14,4,13,1,2,15,11,8,3,10,6,12,5,9,0,7],
+        ...
+    ],
+    # S2
+    [
+        [15,1,8,14,6,11,3,4,9,7,2,13,12,0,5,10],
+        ...
+    ],
+    ...
+]
 ```
-- **Cấu trúc:** 8 hộp; mỗi hộp là ma trận 4 hàng × 16 cột; tổng 64 giá trị (0–15).
-- **Ý nghĩa:** Ánh xạ 6 bit → 4 bit (phi tuyến). Hàng chọn bởi 2 bit biên, cột chọn bởi 4 bit giữa.
-- **Tác động:** Giảm 48 bit sau XOR về 32 bit, thêm phi tuyến để chống tấn công tuyến tính/vi sai.
+- **8 S-Box:** Mỗi S-Box là ma trận 4×16 (4 hàng, 16 cột), giá trị 0–15 (4 bit).
+- **Công dụng:** Mỗi nhóm 6 bit vào S-Box: 2 bit biên chọn hàng, 4 bit giữa chọn cột; trả về 4 bit đầu ra phi tuyến.
 
 ```python
-P = [16,7,20,21,29,12,28,17, ...]
+P = [16,7,20,21,29,12,28,17,
+     1,15,23,26,5,18,31,10,
+     2,8,24,14,32,27,3,9,
+     19,13,30,6,22,11,4,25]
 ```
-- **Danh sách 32 chỉ số:** Hoán vị 32 bit sau S-Box.
-- **Ý nghĩa:** Khuếch tán: lan tỏa ảnh hưởng của mỗi bit vào nhiều vị trí.
+- **Bảng P:** Hoán vị 32 bit sau S-Box để khuếch tán ảnh hưởng bit trên toàn khối.
+- **Công dụng:** Ví dụ vị trí đầu (16) nghĩa là bit 16 của đầu vào P trở thành bit đầu ra.
 
 ```python
-PC1 = [57, 49, 41, 33, 25, 17, 9, ...]
+PC1 = [57, 49, 41, 33, 25, 17, 9,
+       1, 58, 50, 42, 34, 26, 18,
+       10, 2, 59, 51, 43, 35, 27,
+       19, 11, 3, 60, 52, 44, 36,
+       63, 55, 47, 39, 31, 23, 15,
+       7, 62, 54, 46, 38, 30, 22,
+       14, 6, 61, 53, 45, 37, 29,
+       21, 13, 5, 28, 20, 12, 4]
 ```
-- **Danh sách 56 chỉ số:** Chọn 56 bit từ 64 bit khóa (loại parity).
-- **Ý nghĩa:** Chuẩn bị khóa cho dịch vòng và PC2.
+- **PC1:** Hoán vị/loại parity của khóa 64 bit để lấy 56 bit hiệu dụng.
+- **Công dụng:** Chỉ số 1-based từ 1..64 trỏ vào bit khóa gốc; 8 bit parity bị loại bỏ.
 
 ```python
-PC2 = [14, 17, 11, 24, 1, 5, ..., 32]
+PC2 = [14, 17, 11, 24, 1, 5,
+       3, 28, 15, 6, 21, 10,
+       23, 19, 12, 4, 26, 8,
+       16, 7, 27, 20, 13, 2, 41, 52, 31, 37, 47, 55,
+       30, 40, 51, 45, 33, 48,
+       44, 49, 39, 56, 34, 53,
+       46, 42, 50, 36, 29, 32]
 ```
-- **Danh sách 48 chỉ số:** Chọn 48 bit từ (C+D) để tạo subkey.
-- **Ý nghĩa:** Tạo subkey dùng trong mỗi vòng Feistel.
+- **PC2:** Chọn 48 bit từ (C+D) 56 bit để tạo subkey mỗi vòng.
+- **Công dụng:** Tập hợp chỉ số 1-based trên chuỗi C||D sau dịch vòng.
 
 ```python
 SHIFT_BITS = [1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1]
 ```
-- **Lịch dịch:** Số bit dịch trái cho C và D ở mỗi vòng (dịch vòng – circular).
+- **Lịch dịch trái:** Cho 16 vòng. Số bit dịch vòng trái cho C và D tương ứng từng vòng.
 
 ---
 
-### Lớp DES: khởi tạo và chuyển đổi bit/byte
+## Lớp DES: khởi tạo và tiện ích
 
 ```python
 class DES:
@@ -62,118 +106,113 @@ class DES:
         self.key = self._to_binary_list(key)
         self.subkeys = self._generate_subkeys() 
 ```
-- **Định nghĩa lớp:** Khai báo lớp DES.
-- **Nhận khóa:** `key` là bytes 8 byte (64 bit).
-- **Chuyển khóa sang bit:** `self._to_binary_list(key)` tạo list 64 phần tử (0/1), thuận tiện cho hoán vị.
-- **Sinh subkey:** `self._generate_subkeys()` tạo và lưu 16 subkeys 48 bit vào `self.subkeys` để dùng lại (tránh tính lại).
+- **Định nghĩa lớp DES:** Bọc logic DES cho một khối 64 bit.
+- **Gán khóa dạng bit:** `self.key` là list 64 bit từ `key` bytes.
+- **Sinh subkeys:** `self.subkeys` chứa 16 subkey 48 bit; tính một lần dùng nhiều lần.
 
 ```python
 def _to_binary_list(self, byte_data):
     bit_list = []
 ```
-- **Khởi tạo danh sách bit:** `bit_list` rỗng, sẽ chứa toàn bộ bit của `byte_data`.
+- **Khởi tạo danh sách bit:** Nơi chứa bit của dữ liệu đầu vào.
 
 ```python
 for byte in byte_data:
 ```
-- **Duyệt từng byte:** Lấy giá trị 0–255 ứng với mỗi ký tự trong `bytes`.
+- **Duyệt từng byte:** Mỗi giá trị 0–255 trong `bytes`.
 
 ```python
     for i in range(7, -1, -1):
         bit_list.append((byte >> i) & 1)
 ```
-- **Duyệt bit trong byte:** Từ bit 7 (MSB) đến bit 0 (LSB), theo thứ tự big-endian.
-- **Dịch phải:** `(byte >> i)` đưa bit thứ i về LSB.
-- **Lấy bit:** `& 1` giữ lại LSB (0 hoặc 1).
-- **Thêm vào danh sách:** Append bit vào `bit_list`.
+- **Duyệt bit từ MSB đến LSB:** i = 7..0.
+- **Dịch phải:** `(byte >> i)` đưa bit thứ i về vị trí LSB.
+- **Lọc LSB:** `& 1` lấy giá trị 0/1 của bit.
+- **Append:** Thêm bit vào danh sách theo thứ tự big-endian trong byte.
 
 ```python
 return bit_list
 ```
-- **Kết quả:** Trả list bit, độ dài = số byte × 8.
+- **Trả danh sách bit:** Độ dài = số byte × 8.
 
 ```python
 def _from_binary_list(self, bit_list):
     byte_data = bytearray()
 ```
-- **Chuẩn bị ghép lại bytes:** `bytearray` cho phép append từng byte.
+- **Chuẩn bị xây bytes:** `bytearray` thuận tiện để append.
 
 ```python
 for i in range(0, len(bit_list), 8):
     byte = 0
 ```
-- **Duyệt khối 8 bit:** Mỗi vòng tạo ra một byte từ 8 bit liên tiếp.
-- **Khởi tạo byte:** Bắt đầu từ 0.
+- **Duyệt nhóm 8 bit:** i tăng theo bước 8; `byte` sẽ ghép các bit thành một byte.
 
 ```python
     for j in range(8):
         byte = (byte << 1) | bit_list[i + j]
 ```
-- **Dịch trái:** Nhân đôi byte hiện tại để mở chỗ cho bit mới (dịch 1 vị trí).
-- **OR bit:** Thêm bit kế tiếp vào LSB. Kết quả là ghép bit theo thứ tự từ MSB đến LSB.
+- **Dịch trái:** Mở chỗ cho bit mới; giữ thứ tự bit đúng (MSB→LSB).
+- **OR bit:** Chèn bit hiện tại vào LSB của `byte`.
 
 ```python
     byte_data.append(byte)
 ```
-- **Lưu byte:** Thêm vào `bytearray`.
+- **Thêm vào mảng byte:** Lưu byte vừa ghép.
 
 ```python
 return bytes(byte_data)
 ```
-- **Chuyển kiểu:** Trả về `bytes` bất biến để sử dụng/bản in.
+- **Trả `bytes`:** Dữ liệu bất biến, dùng để xuất/in.
 
 ```python
 def _permute(self, data, p_table):
     return [data[bit -1 ] for bit in p_table]
 ```
-- **Hoán vị chung:** Áp dụng mọi bảng hoán vị DES.
-- **Chỉ số 1-based → 0-based:** `bit - 1` chuyển sang chỉ số Python.
-- **Kết quả:** Tạo list bit mới theo thứ tự yêu cầu của bảng (không thay đổi độ dài).
+- **Hoán vị tổng quát:** Dùng mọi bảng DES (1-based).
+- **Chỉ số 1-based → 0-based:** `bit - 1` để truy cập đúng phần tử trong `data`.
+- **Trả list mới:** Kích thước bằng độ dài `p_table`.
 
 ---
 
-### Hàm Feistel (F-function) của DES
+## Hàm Feistel (F-function)
 
 ```python
 def _feistel(self, right, subkey):
     expanded_right = self._permute(right, E)
 ```
-- **Đầu vào:** `right` là list 32 bit; `subkey` là list 48 bit cho vòng hiện tại.
-- **Mở rộng:** Hoán vị `right` bằng bảng E để tạo `expanded_right` 48 bit.
+- **Đầu vào:** `right` là list 32 bit (nửa phải), `subkey` là list 48 bit.
+- **Mở rộng:** Dùng `E` để từ 32 → 48 bit; tạo biên lặp cho S-Box.
 
 ```python
     xored_result = [a ^ b for a,b in zip(expanded_right, subkey)]
 ```
-- **XOR subkey:** Kết hợp `expanded_right` và `subkey` bit–bit.
-- **`zip`:** Ghép từng cặp bit tương ứng; XOR tạo 48 bit đầu vào cho S-Box.
+- **XOR với subkey:** Kết hợp khóa vòng với dữ liệu; `zip` ghép từng cặp bit; `^` là XOR.
 
 ```python
     sbox_result = []
 ```
-- **Chuẩn bị kết quả S-Box:** Danh sách rỗng sẽ chứa 32 bit sau S-Box.
+- **Kết quả S-Box:** Nơi chứa 32 bit đầu ra sau 8 S-Box.
 
 ```python
     for i in range(8):
         sbox_input = xored_result[i*6:(i+1)*6]
 ```
-- **Chia nhóm:** Mỗi vòng lấy 6 bit liên tiếp (tổng 8 nhóm: i = 0..7).
-- **Phân nhóm:** `i*6` đến `(i+1)*6` cắt lát 6 bit phù hợp với S-Box i.
+- **Cắt nhóm 6 bit:** 48 bit thành 8 nhóm (0..7), mỗi nhóm cho một S-Box.
 
 ```python
         row = (sbox_input[0] << 1) + sbox_input[5]
 ```
-- **Tính hàng:** Lấy bit đầu và bit cuối (biên) của 6 bit. Kết hợp thành số 2 bit: `row ∈ {0..3}`.
-- **Dịch trái:** `(bit0 << 1)` để bit đầu trở thành MSB của row.
+- **Chọn hàng:** 2 bit biên: bit đầu làm MSB, bit cuối làm LSB → giá trị 0..3.
 
 ```python
         col = (sbox_input[1] << 3) + (sbox_input[2] << 2) + (sbox_input[3] << 1) + sbox_input[4]
 ```
-- **Tính cột:** Lấy 4 bit giữa, đặt vị trí theo trọng số 8–4–2–1. `col ∈ {0..15}`.
+- **Chọn cột:** 4 bit giữa tạo giá trị 0..15 theo trọng số 8,4,2,1.
 
 ```python
         val = S_BOXES[i][row][col]
 ```
-- **Tra S-Box:** Lấy giá trị 4 bit (0–15) từ bảng S-Box thứ i với chỉ số hàng/cột.
+- **Tra S-Box:** Lấy giá trị 4 bit (0..15) tại S-Box i, hàng `row`, cột `col`.
 
 ```python
         sbox_result.extend([(val >> 3) & 1,
@@ -181,183 +220,181 @@ def _feistel(self, right, subkey):
                             (val >> 1) & 1,
                             val & 1])
 ```
-- **Tách thành 4 bit:** Dịch phải 3, 2, 1, 0 để lấy từng bit của `val` từ MSB đến LSB.
-- **Append:** Nối 4 bit vào `sbox_result`. Sau 8 nhóm, tổng cộng 32 bit.
+- **Tách 4 bit:** Dịch phải 3,2,1,0 để lấy từng bit của `val`.
+- **Append:** Thêm vào `sbox_result` theo thứ tự từ bit cao đến bit thấp (MSB→LSB).
 
 ```python
     return self._permute(sbox_result, P)
 ```
-- **P-Box:** Hoán vị 32 bit đầu ra S-Box theo bảng P để khuếch tán.
-- **Kết quả F-function:** Trả list 32 bit.
+- **P-box:** Hoán vị 32 bit để khuếch tán; trả về 32 bit kết quả F-function.
 
 ---
 
-### Sinh subkeys: PC1, dịch vòng, PC2
+## Sinh subkeys
 
 ```python
 def _generate_subkeys(self):
     key_permuted = self._permute(self.key, PC1)
 ```
-- **PC1:** Hoán vị khóa 64 bit (list 64 bit) thành 56 bit (loại parity), đúng chuẩn DES.
+- **PC1:** Lọc và hoán vị khóa 64 → 56 bit (loại parity); tạo `key_permuted`.
 
 ```python
     C = key_permuted[:28]
     D = key_permuted[28:]
 ```
-- **Chia đôi:** Tạo hai nửa 28 bit: C (trái) và D (phải) để tiến hành dịch vòng.
+- **Chia đôi:** Tạo 2 nửa 28 bit: C (trái), D (phải) để dịch vòng.
 
 ```python
     subkeys = []
 ```
-- **Danh sách subkey:** Sẽ chứa 16 subkey 48 bit.
+- **Danh sách subkey:** Nơi chứa 16 subkey 48 bit theo thứ tự vòng.
 
 ```python
     for shift in SHIFT_BITS:
 ```
-- **Duyệt 16 vòng:** Mỗi vòng có số dịch trái tương ứng.
+- **Vòng 16 lần:** Mỗi lần tương ứng một vòng DES.
 
 ```python
         C = C[shift:] + C[:shift]
         D = D[shift:] + D[:shift]
 ```
-- **Dịch vòng trái:** C và D đều dịch trái `shift` bit. Phần bị đẩy ra đầu quay về cuối (circular).
+- **Dịch vòng trái:** Dịch `shift` bit; phần dịch ra quay lại cuối danh sách.
 
 ```python
         combined = C + D
 ```
-- **Ghép lại:** Tạo khóa tạm 56 bit từ C và D sau khi dịch vòng.
+- **Ghép C||D:** Tạo chuỗi 56 bit sau dịch vòng.
 
 ```python
         subkey = self._permute(combined, PC2)
 ```
-- **PC2:** Chọn 48 bit từ `combined` để tạo `subkey` cho vòng hiện tại.
+- **PC2:** Chọn 48 bit theo PC2; tạo subkey cho vòng hiện tại.
 
 ```python
         subkeys.append(subkey)
 ```
-- **Lưu subkey:** Thêm subkey vào danh sách.
+- **Lưu subkey:** Thêm vào danh sách `subkeys`.
 
 ```python
     return subkeys
 ```
-- **Trả về:** 16 subkey 48 bit, thứ tự đúng cho mã hóa (0..15).
+- **Trả 16 subkey:** Dùng cho mã hóa theo thứ tự 0..15; giải mã sẽ dùng ngược lại.
 
 ---
 
-### Mã hóa một khối 64 bit
+## Mã hóa một khối
 
 ```python
 def encrypt_block(self, plaintext_block):
     data = self._to_binary_list(plaintext_block)
 ```
-- **Đổi bytes → bit:** `plaintext_block` (8 byte) chuyển thành list 64 bit.
+- **Chuyển bytes → bit:** Tạo list 64 bit `data` từ `plaintext_block` 8 byte.
 
 ```python
     permuted_data = self._permute(data, IP)
 ```
-- **IP:** Hoán vị ban đầu 64 bit để chuẩn hóa vị trí bit.
+- **IP:** Hoán vị ban đầu 64 bit; chuẩn hóa vị trí bit cho vòng Feistel.
 
 ```python
     left, right = permuted_data[:32], permuted_data[32:]
 ```
-- **Chia nửa:** L0 = 32 bit đầu; R0 = 32 bit sau.
+- **Tách L0/R0:** 32 bit đầu là L0, 32 bit sau là R0.
 
 ```python
     for i in range(16):
         temp_left = left
 ```
-- **Bắt đầu vòng:** Lưu L(i-1) trong `temp_left`.
+- **Bắt đầu vòng:** Lưu L(i-1) vào `temp_left`.
 
 ```python
         left = right
 ```
-- **Hoán vị nửa:** L(i) = R(i-1) (quy tắc Feistel).
+- **Hoán nửa:** L(i) = R(i-1) (định nghĩa mạng Feistel).
 
 ```python
         f_result = self._feistel(right, self.subkeys[i])
 ```
-- **F-function:** Tính F(R(i-1), K(i)) bằng `_feistel`.
+- **F(R, K):** Tính F-function với R(i-1) và subkey vòng i.
 
 ```python
         right = [a ^ b for a, b in zip(temp_left, f_result)]
 ```
-- **XOR cập nhật:** R(i) = L(i-1) XOR F(R(i-1), K(i)).
-- **`zip`:** Ghép từng cặp bit tương ứng; XOR tạo list 32 bit mới.
+- **Cập nhật R:** R(i) = L(i-1) XOR F(R(i-1), K(i)). `zip` ghép từng bit, `^` XOR.
 
 ```python
     combined = right + left
 ```
-- **Ghép cuối:** Tạo chuỗi R16 || L16 (đảo nửa cuối theo chuẩn DES).
+- **Ghép R16||L16:** Đảo vị trí nửa theo chuẩn DES trước FP.
 
 ```python
     ciphertext = self._permute(combined, FP)
 ```
-- **FP:** Hoán vị cuối 64 bit để ra bản mã.
+- **FP:** Hoán vị cuối 64 bit; tạo dữ liệu bản mã.
 
 ```python
     return self._from_binary_list(ciphertext)
 ```
-- **Đổi bit → bytes:** Trả về 8 byte bản mã.
+- **Bit → bytes:** Trả về 8 byte bản mã.
 
 ---
 
-### Giải mã một khối 64 bit
+## Giải mã một khối
 
 ```python
 def decrypt_block(self, ciphertext_block):
     data = self._to_binary_list(ciphertext_block)
 ```
-- **Đổi bytes → bit:** `ciphertext_block` (8 byte) thành list 64 bit.
+- **Chuyển bytes → bit:** Tạo list 64 bit từ bản mã 8 byte.
 
 ```python
     permuted_data = self._permute(data, IP)
 ```
-- **IP:** Hoán vị ban đầu (giải mã cũng áp dụng IP theo chuẩn DES).
+- **IP:** Áp dụng giống mã hóa (chuẩn DES yêu cầu).
 
 ```python
     left, right = permuted_data[:32], permuted_data[32:]
 ```
-- **Chia nửa:** L0, R0 giống mã hóa.
+- **Tách L0/R0:** Như mã hóa.
 
 ```python
     for i in range(15, -1, -1):
         temp_left = left
 ```
-- **Vòng ngược:** Duyệt subkeys theo thứ tự đảo (15 xuống 0); lưu L(i-1).
+- **Vòng ngược:** Duyệt i từ 15 đến 0; lưu L(i-1).
 
 ```python
         left = right
 ```
-- **Hoán vị nửa:** L(i) = R(i-1), giống mã hóa.
+- **Hoán nửa:** L(i) = R(i-1).
 
 ```python
         f_result = self._feistel(right, self.subkeys[i])
 ```
-- **F-function:** Dùng subkey ngược cho cùng phép F.
+- **F(R, K[i]):** Dùng subkey theo thứ tự ngược (nhờ cấu trúc Feistel).
 
 ```python
         right = [a ^ b for a, b in zip(temp_left, f_result)]
 ```
-- **XOR cập nhật:** R(i) = L(i-1) XOR F(R(i-1), K(i)), cấu trúc Feistel đảm bảo hoàn tác.
+- **Cập nhật R:** R(i) = L(i-1) XOR F(...), hoàn tác đúng quy trình mã hóa.
 
 ```python
     combined = right + left
 ```
-- **Ghép cuối:** R16 || L16.
+- **Ghép R16||L16:** Chuẩn bị cho FP.
 
 ```python
     decrypt_data = self._permute(combined, FP)
 ```
-- **FP:** Hoán vị cuối, đưa dữ liệu về bản rõ đúng thứ tự.
+- **FP:** Hoán vị cuối; đưa dữ liệu về bản rõ.
 
 ```python
     return self._from_binary_list(decrypt_data)
 ```
-- **Đổi bit → bytes:** Trả về 8 byte bản rõ.
+- **Bit → bytes:** Trả về 8 byte bản rõ.
 
 ---
 
-### TripleDES (EDE): kết hợp ba DES
+## Lớp TripleDES (EDE)
 
 ```python
 class TripleDES:
@@ -366,90 +403,92 @@ class TripleDES:
         self.des2 = DES(key2)
         self.des3 = DES(key3)
 ```
-- **Định nghĩa lớp:** Bọc ba instance DES riêng.
-- **Khởi tạo DES:** Mỗi DES sinh subkeys từ khóa riêng (tối ưu: subkeys chỉ sinh một lần).
+- **Định nghĩa lớp:** Kết hợp 3 DES độc lập.
+- **Khởi tạo 3 DES:** Mỗi DES sinh subkeys từ khóa riêng; tối ưu tính toán (sinh một lần).
 
 ```python
 def encrypt(self, plaintext):
     sep1 = self.des1.encrypt_block(plaintext)
 ```
-- **Bước 1 (E):** Mã hóa khối bằng `key1` (DES#1) → `sep1` trung gian.
+- **E bước 1:** Mã hóa khối với `key1` → `sep1`.
 
 ```python
     sep2 = self.des2.decrypt_block(sep1)
 ```
-- **Bước 2 (D):** Giải mã `sep1` bằng `key2` (DES#2) → `sep2`.
-- **Ý nghĩa:** EDE giữ tương thích khi `key1 == key2 == key3` (hành vi như DES), nhưng tăng bảo mật khi khác nhau.
+- **D bước 2:** Giải mã `sep1` với `key2` → `sep2`. Sử dụng giải mã để giữ tương thích DES khi khóa trùng.
 
 ```python
     ciphertext = self.des3.encrypt_block(sep2)
     return ciphertext
 ```
-- **Bước 3 (E):** Mã hóa `sep2` bằng `key3` (DES#3) → `ciphertext`.
-- **Trả về:** Bản mã 8 byte của TripleDES.
+- **E bước 3:** Mã hóa `sep2` với `key3` → `ciphertext`. Trả về bản mã 8 byte.
 
 ```python
 def decrypt(self, ciphertext):
     sep1 = self.des3.decrypt_block(ciphertext)
 ```
-- **Bước 1 (D):** Giải mã bằng `key3` (DES#3) → `sep1`.
+- **D bước 1:** Giải mã bản mã với `key3` → `sep1`.
 
 ```python
     sep2 = self.des2.encrypt_block(sep1)
 ```
-- **Bước 2 (E):** Mã hóa bằng `key2` (DES#2) → `sep2`.
+- **E bước 2:** Mã hóa trung gian với `key2` → `sep2`.
 
 ```python
     plaintext = self.des1.decrypt_block(sep2)
     return plaintext
 ```
-- **Bước 3 (D):** Giải mã bằng `key1` (DES#1) → bản rõ cuối cùng.
+- **D bước 3:** Giải mã `sep2` với `key1` → bản rõ.
 
 ---
+
+## Đoạn chạy thử
 
 ```python
 key1 = b'12345678'
 key2 = b'abcdefgh'
 key3 = b'IJKLMNOP'
 ```
-- **Tạo ba khóa:** Mỗi khóa là 8 byte. DES sẽ dùng 56 bit hiệu dụng (8 bit parity bị PC1 loại).
+- **Ba khóa 8 byte:** Mỗi khóa 64 bit; DES dùng 56 bit hiệu dụng (8 bit parity bị loại bởi PC1).
 
 ```python
 plaintext = b'12345678'
 ```
-- **Bản rõ:** Một khối đúng 8 byte. Mã này không xử lý padding; chỉ dành cho dữ liệu tròn khối 8 byte.
+- **Bản rõ:** Một khối đúng 8 byte. Không có padding trong mã này.
 
 ```python
 triple_des_cipher = TripleDES(key1, key2, key3)
 ```
-- **Khởi tạo 3DES:** Tạo ba DES bên trong với khóa tương ứng, sinh subkeys.
+- **Khởi tạo TripleDES:** Tạo ba đối tượng DES; subkeys được sinh ra.
 
 ```python
 ciphertext = triple_des_cipher.encrypt(plaintext)
 ```
-- **Mã hóa:** Thực hiện EDE (DES1 encrypt → DES2 decrypt → DES3 encrypt) trên `plaintext`. Trả 8 byte bản mã.
+- **Mã hóa:** Thực hiện EDE trên `plaintext` → `ciphertext`.
 
 ```python
 print(f"Bản rõ: {plaintext.hex()}")
 ```
-- **In hex bản rõ:** Chuyển `plaintext` sang chuỗi hex để quan sát dễ hơn.
+- **In hex bản rõ:** Dễ quan sát giá trị theo hệ 16.
 
 ```python
 print(f"Bản mã: {ciphertext.hex()}")
 ```
-- **In hex bản mã:** Hiển thị kết quả mã hóa dạng hex.
+- **In hex bản mã:** Kiểm tra kết quả mã hóa.
 
 ```python
 decrypted_text = triple_des_cipher.decrypt(ciphertext)
 ```
-- **Giải mã:** Thực hiện EDE ngược (DES3 decrypt → DES2 encrypt → DES1 decrypt) trên `ciphertext`. Trả 8 byte bản rõ.
+- **Giải mã:** Thực hiện EDE ngược trên `ciphertext` → `decrypted_text`.
 
 ```python
 print(f"Giải mã: {decrypted_text.hex()}")
 ```
-- **In hex giải mã:** Cho thấy dữ liệu sau giải mã.
+- **In hex giải mã:** Hiển thị giá trị sau giải mã.
 
 ```python
 print(f"Khớp bản rõ: {decrypted_text == plaintext}")
 ```
-- **Kiểm tra tính đúng:** So sánh bytes trực tiếp, in True nếu giải mã khớp bản rõ ban đầu.
+- **Kiểm tra:** So sánh bytes trực tiếp; True nếu đúng.
+
+---
